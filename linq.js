@@ -5,8 +5,10 @@
 //2015-09-23 v1.4 新增数组截取功能：skip、take、limit，以及生成数组功能：random、new
 //2015-11-17 v1.4.1 增加each方法如果数据长度为0返回false否则处理完成返回true
 //2016-05-27 v1.5 所有接受回调方法的方法均支持字符串写法、修改一些bug
+//2017-06-06 v1.5.1 增加remove方法，用于移除数组元素，可按条件、索引等移除;
+//                  增加orderBy方法，数组排序，支持多字段子字段排序，支持字符串或数组
 (function (self) {
-    var ver = 1.5;
+    var ver = '1.5.1';
     //遍历元素 this=当前元素;返回值=无
     self.prototype.each = function (callback) {
         callback = getFunc(callback);
@@ -117,7 +119,59 @@
         if (!count) { count = start; start = 0; }
         return this.slice(start, start + count);
     }
-
+    //将当前数组输入到控制台，便于调试  2017.03.23
+    self.prototype.out=function(){
+        console.log(this);
+    }
+    //移除数组元素，返回改变后的array(也是当前array)，可接受的参数有function/string(条件)、int(索引)、object(对象)
+    self.prototype.remove=function (cond) {
+        if(typeof cond=='function' || typeof cond=='string'){
+            this.remove(this.where(cond));
+        }
+        else if(cond instanceof Array){
+            var that=this;
+            cond.each(function(){
+                remove.call(that,that.indexOf(this));
+            })
+        }
+        else{
+            var index = (typeof cond=='object')?this.indexOf(cond):cond;
+            remove.call(this,index);
+        }
+        return this;
+    }
+    //数组排序，支持多字段子字段排序，支持字符串或数组。如 "name、name desc、name asc,age desc、["name","base.arr.length desc"]"
+    self.prototype.orderBy=function(fileds){
+        var sorts = (typeof fileds=="string"?fileds.split(","):fileds).select(function(){
+            var arr = this.split(' ');
+            return {
+                by:arr[1]||'asc',
+                children:arr[0].split('.')
+            };
+        });
+        var getProValue=function(obj,pro){
+            var p = obj;
+            pro.children.each(function(){
+                p=p[this];
+            })
+            return p;
+        }
+        var sortFunc=function (a,b) {
+            for(var i=0,ci;ci=sorts[i];i++){
+                var p1=getProValue(a,ci);
+                var p2=getProValue(b,ci);
+                var by=[];
+                by[0]=ci.by=='asc'?1:0;
+                by[1]=ci.by=='desc'?1:0;
+                if(p1!=p2){
+                    return p1>p2?by[0]:by[1];
+                }
+            }
+            //相等情况
+            return 0;
+        }
+        return this.sort(sortFunc);
+    }
     //*****静态方法
     //创建范围数组min含-max含
     self.range = function (min, max) {
@@ -158,5 +212,8 @@
         code += (func + ";}");
         eval(code);
         return tmpFunc;
+    }
+    function remove(index){
+        return this.splice(index,1);
     }
 })(Array);

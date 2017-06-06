@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="linq.js"></script>
+    <script>
+        var datas=[
+            {
+                id:1,
+                name:'aa',
+                age:18
+            },
+            {
+                id:2,
+                name:'bbb',
+                age:22
+            },
+            {
+                id:3,
+                name:'cccc',
+                age:21
+            },
+            {
+                id:4,
+                name:'dd',
+                age:25
+            },
+            {
+                id:5,
+                name:'eeeee',
+                age:20
+            },
+            {
+                id:6,
+                name:'aaa',
+                age:20
+            }
+        ];
+        datas.remove(3).out();
+        datas.remove("this.age>24").out();
+        datas.orderBy("age desc,name asc").out();
+        datas.orderBy(["name.length desc","age desc","id asc"]).out();
+    </script>
+    <title>linqTest</title>
+</head>
+<body>
+
+</body>
+</html>
