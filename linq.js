@@ -9,15 +9,15 @@
 //                  增加orderBy方法，数组排序，支持多字段子字段排序，支持字符串或数组
 (function (self) {
     var ver = '1.5.1';
-    //遍历元素 this=当前元素;返回值=无
-    self.prototype.each = function (callback) {
+    //遍历元素 this=当前元素,rtn执行完后返回值(可选);返回值=this或rtn
+    self.prototype.each = function (callback,rtn) {
         callback = getFunc(callback);
         if (!callback) return false;
         if (this.length < 1) return false;
         for (var i = 0, ci; ci = this[i]; i++) {
             callback.call(ci, i);
         }
-        return true;
+        return rtn || this;
     };
     //求和 this=当前元素;返回值=当前元素需要累加的值
     self.prototype.sum = function (func) {
@@ -61,7 +61,7 @@
                 return ci;
         }
     }
-    //取最第一个或第一个满足条件的元素 this=当前元素;返回值=true/false
+    //取第一个或第一个满足条件的元素 this=当前元素;返回值=true/false
     self.prototype.first = function (func) {
         func = getFunc(func,1);
         if (!func)
