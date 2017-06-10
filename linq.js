@@ -7,6 +7,7 @@
 //2016-05-27 v1.5 所有接受回调方法的方法均支持字符串写法、修改一些bug
 //2017-06-06 v1.5.1 增加remove方法，用于移除数组元素，可按条件、索引等移除;
 //                  增加orderBy方法，数组排序，支持多字段子字段排序，支持字符串或数组
+//2017-6-10  v1.5.2 回调为字符串时，可使用3个变量i:当前索引 s:当前对象(等同this) a:附加数据(调用linq方法时可以加第2个参数)
 (function (self) {
     var ver = '1.5.1';
     //遍历元素 this=当前元素,rtn执行完后返回值(可选);返回值=this或rtn
@@ -15,18 +16,18 @@
         if (!callback) return false;
         if (this.length < 1) return false;
         for (var i = 0, ci; ci = this[i]; i++) {
-            callback.call(ci, i);
+            callback.call(ci, i,rtn);
         }
         return rtn || this;
     };
     //求和 this=当前元素;返回值=当前元素需要累加的值
-    self.prototype.sum = function (func) {
+    self.prototype.sum = function (func,attach) {
         func = getFunc(func,1);
         var sum;
         for (var i = 0, ci; ci = this[i]; i++) {
             var value;
             if (func)
-                value = func.call(ci, i);
+                value = func.call(ci, i,attach);
             else
                 value = ci;
             sum = sum ? sum + value : value;
@@ -34,62 +35,62 @@
         return sum;
     };
     //过滤元素(该方法会返回一个新数组) this=当前元素;返回值=true/false
-    self.prototype.where = function (func) {
+    self.prototype.where = function (func,attach) {
         func = getFunc(func,1);
         var result = [];
         for (var i = 0, ci; ci = this[i]; i++) {
-            if (func && func.call(ci, i))
+            if (func && func.call(ci, i,attach))
                 result.push(ci);
         }
         return result;
     }
     //取第一个满足条件的元素 this=当前元素;返回值=true/false
-    self.prototype.single = function (func) {
+    self.prototype.single = function (func,attach) {
         func = getFunc(func,1);
         for (var i = 0, ci; ci = this[i]; i++) {
-            if (func && func.call(ci, i))
+            if (func && func.call(ci, i,attach))
                 return ci;
         }
     }
     //取最后一个或最后一个满足条件的元素 this=当前元素;返回值=true/false
-    self.prototype.last = function (func) {
+    self.prototype.last = function (func,attach) {
         func = getFunc(func,1);
         if (!func)
             return this.length > 0 ? this[this.length - 1] : null;
         for (var i = this.length - 1, ci; ci = this[i]; i--) {
-            if (func.call(ci, i))
+            if (func.call(ci, i,attach))
                 return ci;
         }
     }
     //取第一个或第一个满足条件的元素 this=当前元素;返回值=true/false
-    self.prototype.first = function (func) {
+    self.prototype.first = function (func,attach) {
         func = getFunc(func,1);
         if (!func)
             return this.length > 0 ? this[0] : null;
         for (var i = 0, ci; ci = this[i]; i++) {
-            if (func.call(ci, i))
+            if (func.call(ci, i,attach))
                 return ci;
         }
     }
     //使用当前数组生成一个新的数组 this=当前元素;返回值=新数组中的元素
-    self.prototype.select = function (func) {
+    self.prototype.select = function (func,attach) {
         func = getFunc(func,1);
         if (!func)
             return this;
         var result = [];
         for (var i = 0, ci; ci = this[i]; i++) {
-            result.push(func.call(ci, i));
+            result.push(func.call(ci, i,attach));
         }
         return result;
     }
     //对数组进行分组 this=当前元素;返回值=分组key
-    self.prototype.group = function (func) {
+    self.prototype.group = function (func,attach) {
         func = getFunc(func,1);
         if (!func)
             return this;
         var obj = {}, result = [];
         for (var i = 0, ci; ci = this[i]; i++) {
-            var key = func.call(ci, i);
+            var key = func.call(ci, i,attach);
             if (!obj[key])
                 obj[key] = [];
             obj[key].push(ci);
@@ -206,7 +207,7 @@
     function getFunc(func, rtn) {
         if (!func) return null;
         if (typeof func == "function") return func;
-        var code = "var tmpFunc = function(){";
+        var code = "var tmpFunc = function(i,a){ var s=this;";
         if (rtn)
             func = "return " + func;
         code += (func + ";}");
